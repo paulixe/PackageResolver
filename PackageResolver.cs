@@ -64,8 +64,17 @@ namespace Historisation
             if (!scriptingDefines.Contains(PackageResolverSettings.DEPENDENCIES_LOADED_CONSTRAINT_NAME))
                 scriptingDefines = scriptingDefines + ";" + PackageResolverSettings.DEPENDENCIES_LOADED_CONSTRAINT_NAME;
             PlayerSettings.SetScriptingDefineSymbols(namedBuildTarget, scriptingDefines);
+        }
+        static void RemoveConstraint()
+        {
+            BuildTarget buildTarget = EditorUserBuildSettings.activeBuildTarget;
+            BuildTargetGroup targetGroup = BuildPipeline.GetBuildTargetGroup(buildTarget);
+            var namedBuildTarget = UnityEditor.Build.NamedBuildTarget.FromBuildTargetGroup(targetGroup);
+            string scriptingDefines = PlayerSettings.GetScriptingDefineSymbols(namedBuildTarget);
+            string[] scriptingDefinesSplit = scriptingDefines.Split(';');
+            var newScriptingDefines = scriptingDefinesSplit.Where((s) => s != PackageResolverSettings.DEPENDENCIES_LOADED_CONSTRAINT_NAME).ToArray();
 
-
+            PlayerSettings.SetScriptingDefineSymbols(namedBuildTarget, newScriptingDefines);
         }
         static void AddConstraints()
         {
@@ -110,9 +119,14 @@ namespace Historisation
                 string targetedPackageName = GetPackagesName();
                 string removedPackageName = packRemoved.name;
                 if (targetedPackageName.Equals(removedPackageName))
+                {
+                    RemoveConstraint();
                     RemoveDependencies();
+                }
+
             }
         }
+
         static string GetFolderPath()
         {
             var paths = AssetDatabase.FindAssets($"{PackageResolverSettings.PACKAGE_RESOLVER_ASSEMBLY_NAME} t:{nameof(AssemblyDefinitionAsset)}");
